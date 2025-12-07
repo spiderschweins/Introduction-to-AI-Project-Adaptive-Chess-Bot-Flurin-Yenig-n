@@ -1,0 +1,36 @@
+# Docker ignore file
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local Stockfish binary (Docker downloads Linux version)
+src/stockfish-windows-x86-64-avx2.exe
+
+# Test files
+*.log
+*.tmp
+
+# Virtual environments
+venv/
+env/
+.env
+
+# PowerShell scripts (not needed in container)
+*.ps1

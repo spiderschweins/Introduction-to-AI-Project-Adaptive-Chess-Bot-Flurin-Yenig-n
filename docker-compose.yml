@@ -1,0 +1,19 @@
+# Docker Compose for Adaptive Chess Bot
+
+services:
+  chessbot:
+    build: .
+    container_name: adaptive-chess-bot
+    ports:
+      - "8000:8000"  # FastAPI backend
+      - "8501:8501"  # Streamlit frontend
+    environment:
+      - CHESSBOT_API_URL=http://localhost:8000
+      - STOCKFISH_PATH=/usr/local/bin/stockfish
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
