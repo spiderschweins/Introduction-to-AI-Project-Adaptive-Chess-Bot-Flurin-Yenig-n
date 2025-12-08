@@ -10,6 +10,8 @@ MAX_DEPTH = 8
 MODULE_DIR = Path(__file__).resolve().parent
 
 # Support both local Windows binary and Docker Linux binary via env var
+
+
 def _stockfish_path() -> str:
     env_path = os.getenv("STOCKFISH_PATH")
     if env_path and Path(env_path).is_file():
@@ -20,10 +22,13 @@ def _stockfish_path() -> str:
         return str(local_bin)
     raise RuntimeError("Stockfish binary not found. Set STOCKFISH_PATH or place binary next to api.py")
 
+
 # Verify Stockfish exists on startup
 _stockfish_path()
 
 # ELO estimation from ACPL using power law (derived from empirical data)
+
+
 def _estimate_elo(acpl: float) -> int:
     """
     Estimates Chess Elo based on Average Centipawn Loss (ACPL).
@@ -31,51 +36,58 @@ def _estimate_elo(acpl: float) -> int:
     """
     if acpl <= 0:
         return 2800  # Handle perfect play or zero error
-    
+
     # Power law formula derived from the graph
-    elo = 323422 * (acpl ** -1.2305)
-    
+    elo = 323422 * (acpl**-1.2305)
+
     # Clamp results
     if elo > 2800:
         return 2800
     elif elo < 400:
         return 400
-    
+
     return int(elo)
 
+
 # Adaptive depth based on estimated ELO
+
+
 def _adaptive_depth(elo: int) -> int:
     """
     Returns Stockfish depth based on player's estimated ELO.
     Lower ELO = easier bot (lower depth).
     """
     if elo < 2000:
-        return 1   # Expert/CM level
+        return 1  # Expert/CM level
     elif elo < 2200:
-        return 2   # National Master
+        return 2  # National Master
     elif elo < 2350:
-        return 3   # International Master
+        return 3  # International Master
     elif elo < 2500:
-        return 4   # Grandmaster
+        return 4  # Grandmaster
     elif elo < 2650:
-        return 5   # Super GM
+        return 5  # Super GM
     elif elo < 2750:
-        return 6   # World Champion
+        return 6  # World Champion
     elif elo < 2900:
-        return 7   # Superhuman
+        return 7  # Superhuman
     else:
-        return 8   # Engine level
+        return 8  # Engine level
+
 
 app = FastAPI(title="Lean Chess", version="0.1")
 
 sessions: dict[str, dict] = {}
 
+
 class SessionRequest(BaseModel):
     session_id: str
     depth: int = Field(4, ge=1, le=MAX_DEPTH)
 
+
 class MoveRequest(BaseModel):
     move: str
+
 
 def _sess(session_id: str) -> dict:
     sess = sessions.get(session_id)
@@ -93,10 +105,13 @@ def _sess(session_id: str) -> dict:
         }
     return sess
 
+
 def _state(sess: dict) -> dict:
     board = sess["board"]
     status = (
-        f"Game over ({board.result()})" if board.is_game_over() else ("White" if board.turn else "Black") + (" to move (check)" if board.is_check() else " to move")
+        f"Game over ({board.result()})"
+        if board.is_game_over()
+        else ("White" if board.turn else "Black") + (" to move (check)" if board.is_check() else " to move")
     )
     return {
         "fen": board.fen(),
@@ -109,45 +124,47 @@ def _state(sess: dict) -> dict:
         "avg_losses": sess["avg_losses"],  # Running ACPL (for sidebar)
     }
 
+
 def _strength(sess: dict, move: chess.Move) -> tuple[int, str]:
     board = sess["board"]
     engine = sess["engine"]
-    
+
     # Step 1: Find the best move and evaluate after it
     result = engine.play(board, chess.engine.Limit(depth=8))
     best_move = result.move
     board.push(best_move)
     best_eval = engine.analyse(board, chess.engine.Limit(depth=8))["score"].relative.score(mate_score=10000)
     board.pop()
-    
+
     # Step 2: Evaluate after the played move
     board.push(move)
     played_eval = engine.analyse(board, chess.engine.Limit(depth=8))["score"].relative.score(mate_score=10000)
     board.pop()
-    
+
     # Step 3: Compute CPL (played_eval - best_eval, as per perspective adjustment)
     # This gives positive loss if played move is worse
     cpl = played_eval - best_eval
     loss = max(0, cpl)  # Clamp to 0 for negative CPL (better moves)
-    
+
     # Store individual CPL for this move
     sess["cpl_losses"].append(loss)
-    
+
     # Update cumulative stats for running average (ACPL)
     sess["total_loss"] += loss
     sess["num_moves"] += 1
     avg_loss = sess["total_loss"] / sess["num_moves"]
     sess["avg_losses"].append(avg_loss)
-    
+
     # Use power-law formula for ELO estimation
     elo = _estimate_elo(avg_loss)
-    
+
     # Adapt bot depth to player's estimated ELO
     sess["depth"] = _adaptive_depth(elo)
-    
+
     summary = f"ACPL: {avg_loss:.1f}, Bot depth: {sess['depth']}"
-    
+
     return elo, summary
+
 
 def _apply_move(sess: dict, move: chess.Move) -> str:
     board = sess["board"]
@@ -155,6 +172,7 @@ def _apply_move(sess: dict, move: chess.Move) -> str:
     board.push(move)
     sess["moves"].append(san)
     return san
+
 
 @app.post("/session")
 def new_session(req: SessionRequest):
@@ -169,10 +187,12 @@ def new_session(req: SessionRequest):
     sess["avg_losses"] = []  # Reset running ACPL
     return _state(sess)
 
+
 @app.get("/session/{session_id}")
 def get_session(session_id: str):
     sess = _sess(session_id)
     return _state(sess)
+
 
 @app.post("/session/{session_id}/move")
 def player_move(session_id: str, req: MoveRequest):
@@ -187,6 +207,7 @@ def player_move(session_id: str, req: MoveRequest):
         return _state(sess)
     except Exception as exc:
         raise HTTPException(400, f"Invalid move: {exc}") from exc
+
 
 @app.post("/session/{session_id}/bot")
 def bot_move(session_id: str):
@@ -204,6 +225,7 @@ def bot_move(session_id: str):
         return _state(sess)
     except Exception as exc:
         raise HTTPException(503, f"Stockfish failed: {exc}") from exc
+
 
 @app.delete("/session/{session_id}")
 def delete_session(session_id: str):
@@ -230,32 +252,13 @@ Examples:
   python -m src.api --port 8080         # Run on port 8080
   python -m src.api --host 0.0.0.0      # Listen on all interfaces
   python -m src.api --reload            # Enable auto-reload for development
-        """
+        """,
     )
-    
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="127.0.0.1",
-        help="Host to bind the server to (default: 127.0.0.1)"
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="Port to run the server on (default: 8000)"
-    )
-    parser.add_argument(
-        "--reload",
-        action="store_true",
-        help="Enable auto-reload for development"
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=1,
-        help="Number of worker processes (default: 1)"
-    )
+
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind the server to (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on (default: 8000)")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
+    parser.add_argument("--workers", type=int, default=1, help="Number of worker processes (default: 1)")
 
     args = parser.parse_args()
 
@@ -268,7 +271,7 @@ Examples:
         host=args.host,
         port=args.port,
         reload=args.reload,
-        workers=args.workers if not args.reload else 1
+        workers=args.workers if not args.reload else 1,
     )
 
 

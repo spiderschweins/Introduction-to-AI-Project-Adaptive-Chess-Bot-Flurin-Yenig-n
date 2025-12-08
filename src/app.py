@@ -1,22 +1,25 @@
-import streamlit as st
-import requests
-import pandas as pd
 import os
+
 import chess
 import matplotlib.pyplot as plt
+import requests
+import streamlit as st
 from matplotlib.ticker import MaxNLocator
 from streamlit.components.v1 import html
 from chess.svg import board
 
 API_URL = os.getenv("CHESSBOT_API_URL", "http://127.0.0.1:8000")
 
+
 def _render_board(fen: str) -> None:
     svg = board(chess.Board(fen), size=420)
     html(svg, height=440)
 
+
 def _get_legal_moves(fen: str) -> list[str]:
     b = chess.Board(fen)
     return [b.san(m) + f" ({m.uci()})" for m in b.legal_moves]
+
 
 st.set_page_config(page_title="Adaptive Chess Bot", page_icon="♟️", layout="wide")
 st.title("♟️ Adaptive Chess Bot")
@@ -35,35 +38,35 @@ if session_id:
     resp = requests.get(f"{API_URL}/session/{session_id}")
     if resp.status_code == 200:
         data = resp.json()
-        
+
         # Show current bot depth (adaptive) in sidebar
         with st.sidebar:
-            st.metric("Bot Depth (Adaptive)", data['depth'])
-            st.metric("Estimated ELO", data['strength'][0])
+            st.metric("Bot Depth (Adaptive)", data["depth"])
+            st.metric("Estimated ELO", data["strength"][0])
             # avg_losses contains running ACPL after each move, so last value is current ACPL
-            avg_cpl = data['avg_losses'][-1] if data['avg_losses'] else 0
+            avg_cpl = data["avg_losses"][-1] if data["avg_losses"] else 0
             st.metric("Avg Centipawn Loss", f"{avg_cpl:.1f}")
-            
+
             # Show legal moves button
-            if data['turn'] == 'white':
+            if data["turn"] == "white":
                 with st.expander("Show Legal Moves"):
-                    b = chess.Board(data['fen'])
+                    b = chess.Board(data["fen"])
                     for m in b.legal_moves:
                         san = b.san(m)
                         st.write(f"{san}:")
                         st.code(m.uci(), language=None)
-        
+
         # Two-column layout: board on left, chart on right
         left_col, right_col = st.columns([3, 2], gap="large")
-        
+
         with left_col:
             st.write(f"**Status:** {data['status']}")
-            _render_board(data['fen'])
+            _render_board(data["fen"])
             st.write(f"**Moves:** {' '.join(data['moves'])}")
             st.write(f"**{data['strength'][1]}**")
-            
+
             # Move input form (only show on white's turn)
-            if data['turn'] == 'white':
+            if data["turn"] == "white":
                 with st.form("move_form", clear_on_submit=True):
                     move = st.text_input("Your Move (UCI)", placeholder="e.g., e2e4")
                     submitted = st.form_submit_button("Make Move")
@@ -83,29 +86,29 @@ if session_id:
                     st.rerun()
                 else:
                     st.error(bot_resp.text)
-        
+
         with right_col:
             st.subheader("Centipawn Loss per Move")
             st.caption("Lower is better – 0 means perfect play!")
             # Use cpl_losses for individual move quality (not running average)
-            cpl_values = data.get('cpl_losses', [])
+            cpl_values = data.get("cpl_losses", [])
             moves = range(1, len(cpl_values) + 1) if cpl_values else []
-            
+
             fig, ax = plt.subplots(figsize=(6, 4))
             if cpl_values:
-                ax.bar(moves, cpl_values, color='#4e79a7')
+                ax.bar(moves, cpl_values, color="#4e79a7")
             ax.set_xlabel("Move")
             ax.set_ylabel("Centipawn Loss")
             ax.set_title("Your Move Quality")
-            
+
             # Ensure x-axis shows at least 20 moves
             current_max = len(cpl_values) if cpl_values else 0
             ax.set_xlim(0.5, max(20.5, current_max + 0.5))
             ax.set_ylim(0, 200)  # Reasonable CPL range
-            
+
             # Integer ticks for x-axis
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-            
+
             st.pyplot(fig)
     else:
         st.info("Start a new session from the sidebar to play!")
@@ -115,7 +118,8 @@ st.divider()
 st.header("📖 Glossary")
 
 with st.expander("**Centipawn (cp)**", expanded=False):
-    st.markdown("""
+    st.markdown(
+        """
 A **centipawn** is 1/100th of a pawn's value. Chess engines measure position advantages in centipawns.
 
 - **+100 cp** = You're up roughly one pawn
@@ -123,10 +127,12 @@ A **centipawn** is 1/100th of a pawn's value. Chess engines measure position adv
 - **0 cp** = Equal position
 
 It's a standardized way to quantify how good or bad a position is.
-""")
+"""
+    )
 
 with st.expander("**Centipawn Loss (CPL)**", expanded=False):
-    st.markdown("""
+    st.markdown(
+        """
 **Centipawn Loss** measures how much worse your move was compared to the best move.
 
 ```
@@ -138,10 +144,12 @@ CPL = Engine's best move eval − Your move's eval
 - **CPL = 300**: You blundered a piece worth of value
 
 Lower is better—it means you're playing closer to perfect chess.
-""")
+"""
+    )
 
 with st.expander("**Average Centipawn Loss (ACPL)**", expanded=False):
-    st.markdown("""
+    st.markdown(
+        """
 **ACPL** is your average centipawn loss across all moves in the game.
 
 ```
@@ -153,10 +161,12 @@ It's the most common metric for measuring overall playing strength:
 - **ACPL 25-50**: Grandmaster/International Master
 - **ACPL 50-100**: Club player
 - **ACPL > 100**: Beginner
-""")
+"""
+    )
 
 with st.expander("**ELO Rating Estimation (Power-Law Formula)**", expanded=False):
-    st.markdown("""
+    st.markdown(
+        """
 We estimate your ELO rating from ACPL using an empirical **power-law formula**:
 
 ```
@@ -176,10 +186,12 @@ This formula was derived by fitting real player data (ACPL vs. known ELO ratings
 | 120 | ~1100 | Beginner |
 
 The estimate is clamped between 400 and 2800 for reasonable bounds.
-""")
+"""
+    )
 
 with st.expander("**Search Depth**", expanded=False):
-    st.markdown("""
+    st.markdown(
+        """
 **Search depth** is how many moves ahead the chess engine looks.
 
 - **Depth 1**: Looks 1 move ahead (very weak)
@@ -198,4 +210,5 @@ Higher depth = stronger play, but takes more time. This bot uses **adaptive dept
 | 2650-2749 | 6 |
 | 2750-2899 | 7 |
 | ≥ 2900 | 8 |
-""")
+"""
+    )

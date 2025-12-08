@@ -5,17 +5,41 @@ An adaptive chess application with CLI, API and web-interface that automatically
 
 ## Setup Instructions
 
-Run the following commands to set up the project:
+### 1. Create Virtual Environment
 
-```bash
-pyenv install 3.10.6
-pyenv virtualenv 3.10.6 chess_env
-pyenv activate chess_env
-pip install -r requirements.txt
+**Windows (PowerShell):**
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 ```
 
-The application expects a `.env` file for environment configuration (see `.env.example`).
-Optionally, create a `.python-version` file with the content `chess_env` to auto-activate the environment.
+**Windows (Command Prompt):**
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+```
+
+**macOS/Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
+
+### 3. Install Dev Dependencies (Optional)
+
+For linting and formatting:
+```bash
+pip install pytest pytest-cov flake8 black==24.3.0
+```
+
+> **Note:** Use `black==24.3.0` to avoid compatibility issues with Python 3.12.5.
 
 
 ## How to Run

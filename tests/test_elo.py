@@ -1,6 +1,7 @@
 """
 Unit tests for ELO estimation and adaptive depth functions.
 """
+
 import pytest
 from src.api import _estimate_elo, _adaptive_depth
 
@@ -45,11 +46,14 @@ class TestEloEstimation:
         elo_high = _estimate_elo(120)
         assert elo_low > elo_mid > elo_high, "ELO should decrease as ACPL increases"
 
-    @pytest.mark.parametrize("acpl,min_elo,max_elo", [
-        (50, 2000, 2800),
-        (100, 1000, 1800),
-        (200, 400, 1000),
-    ])
+    @pytest.mark.parametrize(
+        "acpl,min_elo,max_elo",
+        [
+            (50, 2000, 2800),
+            (100, 1000, 1800),
+            (200, 400, 1000),
+        ],
+    )
     def test_elo_ranges(self, acpl, min_elo, max_elo):
         """Test ELO estimation for various ACPL values."""
         elo = _estimate_elo(acpl)
@@ -74,25 +78,28 @@ class TestAdaptiveDepth:
         depth = _adaptive_depth(2900)
         assert depth == 8, f"ELO 2900 should give depth 8, got {depth}"
 
-    @pytest.mark.parametrize("elo,expected_depth", [
-        (1000, 1),
-        (1999, 1),
-        (2000, 2),  # >= 2000 gets depth 2
-        (2100, 2),
-        (2199, 2),
-        (2200, 3),  # >= 2200 gets depth 3
-        (2349, 3),
-        (2350, 4),  # >= 2350 gets depth 4
-        (2499, 4),
-        (2500, 5),  # >= 2500 gets depth 5
-        (2649, 5),
-        (2650, 6),  # >= 2650 gets depth 6
-        (2749, 6),
-        (2750, 7),  # >= 2750 gets depth 7
-        (2899, 7),
-        (2900, 8),  # >= 2900 gets depth 8
-        (3000, 8),
-    ])
+    @pytest.mark.parametrize(
+        "elo,expected_depth",
+        [
+            (1000, 1),
+            (1999, 1),
+            (2000, 2),  # >= 2000 gets depth 2
+            (2100, 2),
+            (2199, 2),
+            (2200, 3),  # >= 2200 gets depth 3
+            (2349, 3),
+            (2350, 4),  # >= 2350 gets depth 4
+            (2499, 4),
+            (2500, 5),  # >= 2500 gets depth 5
+            (2649, 5),
+            (2650, 6),  # >= 2650 gets depth 6
+            (2749, 6),
+            (2750, 7),  # >= 2750 gets depth 7
+            (2899, 7),
+            (2900, 8),  # >= 2900 gets depth 8
+            (3000, 8),
+        ],
+    )
     def test_depth_boundaries(self, elo, expected_depth):
         """Test depth at ELO boundaries."""
         depth = _adaptive_depth(elo)
@@ -121,7 +128,7 @@ class TestCPLvsACPL:
         for i, cpl in enumerate(cpl_values, 1):
             total += cpl
             running_acpl.append(total / i)
-        
+
         expected = [20.0, 30.0, 30.0, 25.0]
         assert running_acpl == expected, f"Expected {expected}, got {running_acpl}"
 
@@ -129,7 +136,7 @@ class TestCPLvsACPL:
         """Individual CPL values should differ from running ACPL values."""
         cpl_values = [20, 40, 30, 10]  # Individual CPL per move
         running_acpl = [20.0, 30.0, 30.0, 25.0]  # Running average
-        
+
         # They should NOT be the same (except potentially the first value)
         assert cpl_values != running_acpl, "CPL and ACPL lists should differ"
         # First value is always the same (only one data point)
@@ -143,7 +150,7 @@ class TestCPLvsACPL:
         for i, cpl in enumerate(cpl_values, 1):
             total += cpl
             running_acpl.append(total / i)
-        
+
         final_acpl = running_acpl[-1]
         mean_cpl = sum(cpl_values) / len(cpl_values)
         assert final_acpl == mean_cpl, f"Final ACPL {final_acpl} should equal mean {mean_cpl}"
@@ -157,7 +164,7 @@ class TestCPLvsACPL:
         for i, cpl in enumerate(cpl_values, 1):
             total += cpl
             running_acpl.append(total / i)
-        
+
         # The spike should be visible in CPL
         assert max(cpl_values) == 200
         # But smoothed in ACPL - max ACPL should be much lower than 200
@@ -170,4 +177,3 @@ class TestCPLvsACPL:
         # If you play a better move than engine suggested, CPL = 0 (not negative)
         assert max(0, -50) == 0, "Negative CPL should be clamped to 0"
         assert max(0, 30) == 30, "Positive CPL should remain unchanged"
-

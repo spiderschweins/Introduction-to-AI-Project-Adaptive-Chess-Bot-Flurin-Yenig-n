@@ -2,6 +2,7 @@
 Tests for Stockfish integration.
 Uses a single shared engine instance to avoid slow startup times.
 """
+
 import pytest
 from src.api import _stockfish_path
 import chess.engine
@@ -34,7 +35,7 @@ class TestStockfish:
         """Test that Stockfish can find a best move."""
         board = chess.Board()
         result = engine.play(board, chess.engine.Limit(depth=1))
-        
+
         assert result.move is not None
         assert result.move in board.legal_moves
 
@@ -42,5 +43,5 @@ class TestStockfish:
         """Test that Stockfish can analyze a position."""
         board = chess.Board()
         info = engine.analyse(board, chess.engine.Limit(depth=1))
-        
+
         assert "score" in info
