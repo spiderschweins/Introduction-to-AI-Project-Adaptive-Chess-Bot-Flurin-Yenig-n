@@ -40,7 +40,8 @@ if session_id:
         with st.sidebar:
             st.metric("Bot Depth (Adaptive)", data['depth'])
             st.metric("Estimated ELO", data['strength'][0])
-            avg_cpl = sum(data['avg_losses']) / len(data['avg_losses']) if data['avg_losses'] else 0
+            # avg_losses contains running ACPL after each move, so last value is current ACPL
+            avg_cpl = data['avg_losses'][-1] if data['avg_losses'] else 0
             st.metric("Avg Centipawn Loss", f"{avg_cpl:.1f}")
             
             # Show legal moves button
