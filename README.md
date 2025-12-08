@@ -23,7 +23,6 @@ Optionally, create a `.python-version` file with the content `chess_env` to auto
 Use the following to launch the application:
 
 ```bash
-cd src
 python -m src.cli play
 ```
 
