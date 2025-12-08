@@ -130,7 +130,7 @@ This "power-law" formula was derived from analyzing real chess games. Here's wha
 
 ### ELO vs ACPL Relationship
 
-![ELO vs ACPL Plot](elo%20vs%20acpl%20plot.png)
+![ELO vs ACPL Plot](data/elo_vs_acpl_plot.png)
 
 **What this graph shows:**
 - The curve is steep at low ACPL values — reducing your average mistake from 30 to 25 centipawns requires enormous skill improvement
