@@ -50,7 +50,8 @@ class TestSessionEndpoints:
         assert "moves" in data
         assert "strength" in data
         assert "depth" in data
-        assert "avg_losses" in data
+        assert "cpl_losses" in data  # Individual CPL per move
+        assert "avg_losses" in data  # Running ACPL
         # Cleanup
         client.delete(f"/session/{session_id}")
 
@@ -130,8 +131,8 @@ class TestAPIStructure:
         response = client.get(f"/session/{session_id}")
         data = response.json()
         
-        # Check all required fields exist
-        required_fields = ["fen", "turn", "status", "moves", "strength", "depth", "avg_losses"]
+        # Check all required fields exist (including both cpl_losses and avg_losses)
+        required_fields = ["fen", "turn", "status", "moves", "strength", "depth", "cpl_losses", "avg_losses"]
         for field in required_fields:
             assert field in data, f"Missing field: {field}"
         
@@ -142,7 +143,8 @@ class TestAPIStructure:
         assert isinstance(data["moves"], list)
         assert isinstance(data["strength"], list)
         assert isinstance(data["depth"], int)
-        assert isinstance(data["avg_losses"], list)
+        assert isinstance(data["cpl_losses"], list)  # Individual CPL per move
+        assert isinstance(data["avg_losses"], list)  # Running ACPL
         # Cleanup
         client.delete(f"/session/{session_id}")
 
