@@ -87,9 +87,9 @@ if session_id:
         with right_col:
             st.subheader("Centipawn Loss per Move")
             st.caption("Lower is better – 0 means perfect play!")
-            # Always show chart (empty if no moves yet)
-            moves = range(1, len(data['avg_losses']) + 1) if data['avg_losses'] else []
-            cpl_values = data['avg_losses'] if data['avg_losses'] else []
+            # Use cpl_losses for individual move quality (not running average)
+            cpl_values = data.get('cpl_losses', [])
+            moves = range(1, len(cpl_values) + 1) if cpl_values else []
             
             fig, ax = plt.subplots(figsize=(6, 4))
             if cpl_values:
@@ -101,7 +101,7 @@ if session_id:
             # Ensure x-axis shows at least 20 moves
             current_max = len(cpl_values) if cpl_values else 0
             ax.set_xlim(0.5, max(20.5, current_max + 0.5))
-            ax.set_ylim(0, 200)  # Reasonable ACPL range
+            ax.set_ylim(0, 200)  # Reasonable CPL range
             
             # Integer ticks for x-axis
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
