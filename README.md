@@ -1,343 +1,257 @@
-# ♟️ Adaptive Chess Bot
+# Adaptive Chess Bot
 
-**Play chess against a computer that adapts to your skill level!**
+An adaptive chess application with CLI, API and web-interface that automatically adjusts difficulty based on player skill level. The bot measures your Average Centipawn Loss (ACPL) to estimate your ELO rating and matches its strength accordingly.
 
-This is a fun, beginner-friendly chess app that:
-- 🎯 **Learns how strong you are** as you play
-- 🤖 **Adjusts difficulty** so you're always challenged but not overwhelmed
-- 📊 **Shows your progress** with easy-to-read charts
-- 🏠 **Runs entirely on your computer** — no internet needed!
 
----
+## Setup Instructions
 
-## 🚀 Quick Start
-
-### Option 1: Using Docker (Recommended — Works on Any Computer!)
-
-If you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed:
+Run the following commands to set up the project:
 
 ```bash
-docker-compose up --build
+pyenv install 3.10.6
+pyenv virtualenv 3.10.6 chess_env
+pyenv activate chess_env
+pip install -r requirements.txt
 ```
 
-Then open your browser to: **http://localhost:8501**
+The application expects a `.env` file for environment configuration (see `.env.example`).
+Optionally, create a `.python-version` file with the content `chess_env` to auto-activate the environment.
 
-That's it! You're ready to play! ♟️
 
-### Option 2: Running Locally (Without Docker)
+## How to Run
 
-1. Make sure you have Python 3.10+ installed
-2. Open a terminal in this folder and run:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Run the app:
-   ```
-   ./run_app.ps1
-   ```
-   Or manually in two separate terminals:
-   ```
-   uvicorn src.api:app --reload
-   ```
-   ```
-   set CHESSBOT_API_URL=http://127.0.0.1:8000
-   streamlit run src/app.py
-   ```
+Use the following to launch the application:
 
----
-
-## 🎮 How to Play
-
-### Step 1: Start a Game
-1. Open the app in your browser (http://localhost:8501)
-2. In the sidebar, you'll see "Session ID" — just leave it as "demo" or type any name
-3. Click **"New Session"** to start!
-
-### Step 2: Make Your Move
-- You play as **White** (you move first!)
-- Look at the board and decide your move
-- **Need help?** Click "Show Legal Moves" in the sidebar to see all possible moves
-- Type your move in the box (like `e2e4` to move a pawn from e2 to e4)
-- Click **"Make Move"**
-
-### Step 3: Watch the Bot Respond
-- The bot automatically plays its move right after yours
-- No waiting, no clicking extra buttons!
-
-### Step 4: Track Your Progress
-- Look at the **right side** of the screen to see your performance chart
-- Check the sidebar for your **Estimated ELO** rating and **Avg Centipawn Loss**
-- The lower your centipawn loss, the better you're playing!
-
----
-
-## 📖 Understanding the Numbers
-
-Don't worry if you're new to chess or these terms seem confusing! Here's a simple guide:
-
-### What is "Centipawn Loss"?
-Think of it like a "mistake meter":
-- **0** = Perfect move! 🌟
-- **50** = Small inaccuracy
-- **100+** = Bigger mistake
-
-The app measures this for every move you make. Lower is better!
-
-### What is "Average Centipawn Loss" (ACPL)?
-Your average mistake size across all moves:
-- **Under 25**: You're playing like a grandmaster! 🏆
-- **25-50**: Very strong play
-- **50-100**: Good club player
-- **Over 100**: Room to improve!
-
-### What is "ELO Rating"?
-It's a number that shows how strong a chess player is:
-- **400-800**: Just starting out 🌱
-- **800-1200**: Casual player
-- **1200-1600**: Club player ♟️
-- **1600-2000**: Strong amateur
-- **2000+**: Expert level 🌟
-
-The app estimates your ELO based on how you play!
-
-### What is "Bot Depth"?
-This is how "smart" the computer opponent is:
-- **Depth 1**: Easy (thinks 1 move ahead)
-- **Depth 8**: Very hard (thinks 8 moves ahead)
-
-**The cool part:** The bot automatically adjusts to match YOUR skill level!
-
----
-
-## 🔬 The Science Behind It
-
-### How ELO is Estimated
-
-Your ELO is calculated using a mathematical formula based on your Average Centipawn Loss:
-
-```
-ELO = 323422 × (ACPL ^ -1.2305)
+```bash
+cd src
+python -m src.cli play
 ```
 
-This "power-law" formula was derived from analyzing real chess games. Here's what it means:
+This launches an interactive terminal chess game against the adaptive bot.
 
-| Your ACPL | Estimated ELO | What it means |
-|-----------|---------------|---------------|
-| 25 | ~2800 | World Champion level |
-| 50 | ~2100 | Expert player |
-| 75 | ~1600 | Club player |
-| 120 | ~1100 | Beginner |
 
-### ELO vs ACPL Relationship
+## How to Launch the Interface
 
-![ELO vs ACPL Plot](data/elo_vs_acpl_plot.png)
+To start both the backend (FastAPI) and the frontend (Streamlit), run:
 
-**What this graph shows:**
-- The curve is steep at low ACPL values — reducing your average mistake from 30 to 25 centipawns requires enormous skill improvement
-- The curve flattens at higher ACPL values — beginners can quickly improve from 150 to 100 ACPL with basic practice
-- This is the nature of a power-law decay: mastery requires exponentially more precision!
-
-### How Adaptive Difficulty Works
-
-The bot adjusts its thinking depth based on your estimated skill:
-
-| Your Estimated ELO | Bot Depth | Bot's Approximate Strength |
-|-------------------|-----------|---------------------------|
-| < 2000 | 1 | ~1800 ELO |
-| 2000-2199 | 2 | ~2000 ELO |
-| 2200-2349 | 3 | ~2200 ELO |
-| 2350-2499 | 4 | ~2400 ELO |
-| 2500-2649 | 5 | ~2600 ELO |
-| 2650-2749 | 6 | ~2700 ELO |
-| 2750-2899 | 7 | ~2800 ELO |
-| ≥ 2900 | 8 | ~3000+ ELO |
-
-This ensures you always have a fair challenge!
-
----
-
-## 🔧 Technical Details (For Developers)
-
-### Architecture
-- **Backend**: FastAPI (Python) with Stockfish chess engine
-- **Frontend**: Streamlit with real-time board rendering
-- **Analysis**: Depth-8 Stockfish analysis for centipawn loss calculation
-- **Containerization**: Docker with auto-downloaded Linux Stockfish
-
-### API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/session` | Create new game session |
-| GET | `/session/{id}` | Get current game state |
-| POST | `/session/{id}/move` | Submit your move (UCI format) |
-| POST | `/session/{id}/bot` | Trigger bot move |
-| DELETE | `/session/{id}` | End session |
-
-### Project Structure
-```
-├── src/
-│   ├── __init__.py                        # Package marker
-│   ├── api.py                             # FastAPI backend + Stockfish integration
-│   ├── app.py                             # Streamlit frontend + charts
-│   ├── cli.py                             # Command-line interface (argparse)
-│   └── stockfish-windows-x86-64-avx2.exe  # Chess engine (Windows)
-├── tests/
-│   ├── test_api.py                        # API endpoint tests
-│   ├── test_cli.py                        # CLI tests
-│   ├── test_elo.py                        # ELO estimation tests
-│   └── test_stockfish.py                  # Engine connectivity tests
-├── Dockerfile                             # Container definition
-├── docker-compose.yml                     # Easy deployment
-├── requirements.txt                       # Python dependencies
-├── setup.py                               # Package installation
-├── Makefile                               # Build automation
-├── autotest.sh                            # Automated test script
-├── run_app.ps1                            # Windows launcher script
-└── README.md                              # This file!
+```bash
+make run
 ```
 
----
+Or manually:
 
-## 💻 Command-Line Interface (CLI)
+```bash
+# Terminal 1: API
+uvicorn src.api:app --reload --port 8000
 
-The app includes a full command-line interface using `argparse`:
+# Terminal 2: UI
+streamlit run src/app.py
+```
 
-### Play a Game in Terminal
+Access the web interface at: `http://localhost:8501`
+
+
+## CLI
+
+The application includes a full command-line interface using `argparse`.
+
+### Example Commands
+
+**Play a game in terminal:**
 ```bash
 python -m src.cli play
-python -m src.cli play --depth 3    # Start with easier bot
+python -m src.cli play --depth 3
 ```
 
-### Analyze a Position
+**Analyze a position:**
 ```bash
 python -m src.cli analyze --fen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
 python -m src.cli analyze --fen "..." --depth 15 --lines 3
 ```
 
-### Estimate ELO from ACPL
+**Estimate ELO from ACPL:**
 ```bash
 python -m src.cli estimate-elo --acpl 50
 python -m src.cli estimate-elo --acpl 120
 ```
 
-### Start the Server/UI
+**Start server/UI:**
 ```bash
-python -m src.cli server                   # Start API on port 8000
-python -m src.cli server --port 9000       # Custom port
-python -m src.cli ui                       # Start Streamlit UI
+python -m src.cli server --port 8000
+python -m src.cli ui --port 8501
 ```
 
-### CLI Help
+
+## API
+
+Implemented using FastAPI. Available endpoints:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/session` | Create new game session |
+| GET | `/session/{id}` | Get current game state |
+| POST | `/session/{id}/move` | Submit player move (UCI format) |
+| POST | `/session/{id}/bot` | Trigger bot response |
+| DELETE | `/session/{id}` | End session |
+
+The backend is served with uvicorn at `localhost:8000`.
+API documentation available at `http://localhost:8000/docs`.
+
+
+## Frontend (Streamlit UI)
+
+A web interface that allows users to:
+- Play chess against the adaptive bot
+- View real-time CPL analysis per move
+- Track estimated ELO rating
+- See performance charts
+
+Streamlit renders the UI at `localhost:8501`.
+
+
+## Docker
+
+A Dockerfile is provided to containerize the entire project. Build and run with:
+
 ```bash
-python -m src.cli --help
-python -m src.cli play --help
-python -m src.cli analyze --help
+docker build -t adaptive-chess-bot .
+docker run -p 8000:8000 -p 8501:8501 adaptive-chess-bot
 ```
 
----
-
-### Environment Variables
-- `CHESSBOT_API_URL`: Backend URL (default: `http://127.0.0.1:8000`)
-- `STOCKFISH_PATH`: Path to Stockfish binary (Docker: `/usr/local/bin/stockfish`)
-
----
-
-## ❓ Troubleshooting
-
-### "The app won't start"
-- **Docker users**: Make sure Docker Desktop is running (check the whale icon in your taskbar)
-- **Local users**: Check that Python 3.10+ is installed: `python --version`
-
-### "My move isn't working"
-- Use UCI notation: `e2e4` means "from e2 to e4" (just the squares, no dash)
-- Click **"Show Legal Moves"** in the sidebar to see all valid options with their UCI codes
-
-### "The bot seems too easy or too hard"
-- Play more moves! The bot needs several moves to estimate your skill level
-- Your ELO estimate becomes more accurate with more data
-
-### "The chart is empty"
-- That's normal at the start! The chart fills in as you make moves
-
-### "Docker build is slow"
-- First build downloads Stockfish (~20MB) and installs dependencies
-- Subsequent builds are much faster due to caching
-
----
-
-## 🎓 Learn More
-
-Scroll down in the app itself — there's a **Glossary** section at the bottom that explains all the chess concepts in detail!
-
----
-
-## 💻 Command-Line Interface
-
-The API server supports command-line arguments:
+Or use docker-compose:
 
 ```bash
-# Run with defaults (localhost:8000)
-python -m src.api
-
-# Run on a different port
-python -m src.api --port 8080
-
-# Listen on all interfaces (for Docker/network access)
-python -m src.api --host 0.0.0.0
-
-# Enable auto-reload for development
-python -m src.api --reload
-
-# Show help
-python -m src.api --help
+docker-compose up --build
 ```
 
----
+Make sure ports 8000 and 8501 are available.
 
-## 🧪 Testing
 
-Run the test suite with pytest:
+## Packaging (setup.py)
+
+This project uses Python packaging conventions:
+- `setup.py` defines the installable structure
+- Install locally with:
 
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage report
-pytest tests/ --cov=src --cov-report=term-missing
-
-# Run specific test file
-pytest tests/test_elo.py -v
+pip install .
 ```
 
-Or use the automation scripts:
+Entry points:
+- `chessbot` - Main CLI interface
+- `chessbot-api` - API server
 
+
+## Testing & Automation
+
+The project includes automated tests using pytest.
+
+**Run all tests:**
 ```bash
-# Windows PowerShell
-./final_test.ps1
-
-# Linux/Mac (bash)
-./autotest.sh
-
-# Using Makefile
 make test
 ```
 
----
+**Format code with Black:**
+```bash
+make format
+```
 
-## 📜 Credits
+**Check code quality with Flake8:**
+```bash
+make lint
+```
 
-**Libraries & Frameworks:**
-- [Stockfish](https://stockfishchess.org/) - Open-source chess engine (GPL-3.0)
-- [python-chess](https://python-chess.readthedocs.io/) - Chess library for Python
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework for APIs
-- [Streamlit](https://streamlit.io/) - Frontend framework for data apps
-- [Uvicorn](https://www.uvicorn.org/) - ASGI server
+**Run all steps at once:**
+```bash
+./autotest.sh
+```
 
-**Research & AI Assistance:**
-- ELO estimation formula (`ELO = 323422 × ACPL^-1.2305`) was derived by **Gemini 3 Pro**, which analyzed the ELO vs ACPL plot and performed power-law regression to extract the coefficients
 
-**Built for:** Introduction to AI course project
+## Project Structure
 
----
+```
+├── src/
+│   ├── __init__.py          # Package marker
+│   ├── api.py               # FastAPI backend + Stockfish integration
+│   ├── app.py               # Streamlit frontend + charts
+│   └── cli.py               # Command-line interface (argparse)
+├── tests/
+│   ├── test_api.py          # API endpoint tests
+│   ├── test_cli.py          # CLI argument tests
+│   ├── test_elo.py          # ELO estimation tests
+│   └── test_stockfish.py    # Engine connectivity tests
+├── data/                    # Data files and plots
+├── docs/                    # Documentation
+├── Dockerfile               # Container definition
+├── docker-compose.yml       # Multi-container deployment
+├── Makefile                 # Build automation
+├── autotest.sh              # Automated test script
+├── requirements.txt         # Python dependencies
+├── setup.py                 # Package installation
+└── README.md                # This file
+```
 
-**Have fun playing! ♟️**
+
+## The AI Technique
+
+### Centipawn Loss (CPL)
+Measures move quality by comparing your move to the engine's best move:
+```
+CPL = Eval(Best Move) - Eval(Your Move)
+```
+
+### ELO Estimation
+Uses a power-law formula derived from empirical data:
+```
+ELO = 323422 × (ACPL ^ -1.2305)
+```
+
+| ACPL | Estimated ELO |
+|------|---------------|
+| 25   | 2800 (capped) |
+| 50   | ~2625         |
+| 100  | ~1118         |
+| 200  | ~476          |
+
+Note: ELO is clamped between 400 and 2800.
+
+### Adaptive Depth
+Bot strength adjusts based on estimated ELO:
+
+| Player ELO | Bot Depth |
+|------------|-----------|
+| < 2000     | 1         |
+| 2000-2199  | 2         |
+| 2200-2349  | 3         |
+| 2350-2499  | 4         |
+| 2500+      | 5-8       |
+
+
+## Dependencies and Environment Info
+
+Main libraries used:
+- `python-chess` - Chess logic and board representation
+- `fastapi` - REST API framework
+- `uvicorn` - ASGI server
+- `streamlit` - Web UI framework
+- `pytest` - Testing framework
+- `python-dotenv` - Environment configuration
+
+Python version: 3.10+
+Virtual environment: pyenv-virtualenv recommended
+
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CHESSBOT_API_URL` | Backend API URL | `http://127.0.0.1:8000` |
+| `STOCKFISH_PATH` | Path to Stockfish binary | Auto-detected |
+
+
+## Expected Output
+
+- Interactive chess game with move-by-move CPL feedback
+- Real-time ELO estimation based on playing strength
+- Adaptive bot difficulty matching player skill
+- Performance visualization charts
