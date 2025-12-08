@@ -31,9 +31,9 @@ test:
 lint:
 	flake8 src/ tests/ --max-line-length=120 --ignore=E501,W503
 
-# Format code
+# Format code (--no-color for CI, works around Python 3.12.5 issue)
 format:
-	black src/ tests/ --line-length=120
+	black src/ tests/ --line-length=120 --target-version py312
 
 # Run FastAPI backend
 run-api:
