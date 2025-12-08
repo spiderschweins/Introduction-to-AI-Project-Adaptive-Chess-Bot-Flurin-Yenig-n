@@ -37,7 +37,7 @@ See the main README.md for API endpoints, or visit `/docs` when running the serv
 ELO = 323422 × (ACPL ^ -1.2305)
 ```
 
-This formula was derived from empirical analysis of chess games correlating Average Centipawn Loss (ACPL) with known player ratings.
+This formula was derived by **Gemini 3 Pro**, which analyzed the ELO vs ACPL plot and performed power-law regression to extract the coefficients. The analysis correlated Average Centipawn Loss (ACPL) with known player ratings from empirical chess game data.
 
 ### Adaptive Depth Algorithm
 

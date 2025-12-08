@@ -285,8 +285,8 @@ make test
 - [Streamlit](https://streamlit.io/) - Frontend framework for data apps
 - [Uvicorn](https://www.uvicorn.org/) - ASGI server
 
-**Research:**
-- ELO estimation formula derived from empirical analysis of chess games and centipawn loss data
+**Research & AI Assistance:**
+- ELO estimation formula (`ELO = 323422 × ACPL^-1.2305`) was derived by **Gemini 3 Pro**, which analyzed the ELO vs ACPL plot and performed power-law regression to extract the coefficients
 
 **Built for:** Introduction to AI course project
 
