@@ -88,7 +88,8 @@ def _sess(session_id: str) -> dict:
             "strength": (1200, "Initial"),
             "total_loss": 0,
             "num_moves": 0,
-            "avg_losses": [],  # List of avg losses for plotting
+            "cpl_losses": [],  # Individual CPL per move (for bar chart)
+            "avg_losses": [],  # Running ACPL after each move (for sidebar)
         }
     return sess
 
@@ -104,7 +105,8 @@ def _state(sess: dict) -> dict:
         "depth": sess["depth"],
         "moves": sess["moves"],
         "strength": sess["strength"],
-        "avg_losses": sess["avg_losses"],  # For plotting
+        "cpl_losses": sess["cpl_losses"],  # Individual CPL per move (for bar chart)
+        "avg_losses": sess["avg_losses"],  # Running ACPL (for sidebar)
     }
 
 def _strength(sess: dict, move: chess.Move) -> tuple[int, str]:
@@ -128,7 +130,10 @@ def _strength(sess: dict, move: chess.Move) -> tuple[int, str]:
     cpl = played_eval - best_eval
     loss = max(0, cpl)  # Clamp to 0 for negative CPL (better moves)
     
-    # Update cumulative stats for average
+    # Store individual CPL for this move
+    sess["cpl_losses"].append(loss)
+    
+    # Update cumulative stats for running average (ACPL)
     sess["total_loss"] += loss
     sess["num_moves"] += 1
     avg_loss = sess["total_loss"] / sess["num_moves"]
@@ -160,7 +165,8 @@ def new_session(req: SessionRequest):
     sess["strength"] = (1200, "Initial")
     sess["total_loss"] = 0
     sess["num_moves"] = 0
-    sess["avg_losses"] = []
+    sess["cpl_losses"] = []  # Reset individual CPL
+    sess["avg_losses"] = []  # Reset running ACPL
     return _state(sess)
 
 @app.get("/session/{session_id}")
