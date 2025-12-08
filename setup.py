@@ -38,8 +38,8 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
+            "chessbot=src.cli:main",
             "chessbot-api=src.api:main",
-            "chessbot-ui=src.app:main",
         ],
     },
 )

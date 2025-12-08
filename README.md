@@ -176,17 +176,65 @@ This ensures you always have a fair challenge!
 ### Project Structure
 ```
 ├── src/
+│   ├── __init__.py                        # Package marker
 │   ├── api.py                             # FastAPI backend + Stockfish integration
 │   ├── app.py                             # Streamlit frontend + charts
+│   ├── cli.py                             # Command-line interface (argparse)
 │   └── stockfish-windows-x86-64-avx2.exe  # Chess engine (Windows)
+├── tests/
+│   ├── test_api.py                        # API endpoint tests
+│   ├── test_cli.py                        # CLI tests
+│   ├── test_elo.py                        # ELO estimation tests
+│   └── test_stockfish.py                  # Engine connectivity tests
 ├── Dockerfile                             # Container definition
 ├── docker-compose.yml                     # Easy deployment
-├── .dockerignore                          # Files excluded from container
 ├── requirements.txt                       # Python dependencies
+├── setup.py                               # Package installation
+├── Makefile                               # Build automation
+├── autotest.sh                            # Automated test script
 ├── run_app.ps1                            # Windows launcher script
-├── final_test.ps1                         # Test script
 └── README.md                              # This file!
 ```
+
+---
+
+## 💻 Command-Line Interface (CLI)
+
+The app includes a full command-line interface using `argparse`:
+
+### Play a Game in Terminal
+```bash
+python -m src.cli play
+python -m src.cli play --depth 3    # Start with easier bot
+```
+
+### Analyze a Position
+```bash
+python -m src.cli analyze --fen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+python -m src.cli analyze --fen "..." --depth 15 --lines 3
+```
+
+### Estimate ELO from ACPL
+```bash
+python -m src.cli estimate-elo --acpl 50
+python -m src.cli estimate-elo --acpl 120
+```
+
+### Start the Server/UI
+```bash
+python -m src.cli server                   # Start API on port 8000
+python -m src.cli server --port 9000       # Custom port
+python -m src.cli ui                       # Start Streamlit UI
+```
+
+### CLI Help
+```bash
+python -m src.cli --help
+python -m src.cli play --help
+python -m src.cli analyze --help
+```
+
+---
 
 ### Environment Variables
 - `CHESSBOT_API_URL`: Backend URL (default: `http://127.0.0.1:8000`)
